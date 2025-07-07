@@ -1,5 +1,5 @@
 resource "aws_lb_target_group" "main" {
-  name     = "${var.project}-${var.environment}-${var.component}" #roboshop-dev-catalogue
+  name     = "${var.project}-${var.environment}-${var.component}" #roboshop-dev-${var.component}
   port     = local.tg_port
   protocol = "HTTP"
   vpc_id   = local.vpc_id
@@ -48,9 +48,6 @@ resource "terraform_data" "main" {
 
   provisioner "remote-exec" {
     inline = [
-      /* "sudo yum install nginx -y",
-      "sudo systemctl enable nginx",
-      "sudo systemctl start nginx" */
       "chmod +x /tmp/${var.component}.sh",
       "sudo sh /tmp/${var.component}.sh ${var.component} ${var.environment}"
     ]
@@ -64,7 +61,7 @@ resource "aws_ec2_instance_state" "main" {
 }
 
 resource "aws_ami_from_instance" "main" {
-  name = "${var.project}-${var.environment}-${var.component}"
+  name               = "${var.project}-${var.environment}-${var.component}"
   source_instance_id = aws_instance.main.id
   depends_on = [aws_ec2_instance_state.main]
   tags = merge(
@@ -83,7 +80,6 @@ resource "terraform_data" "main_delete" {
   # make sure you have aws configure in your laptop
   provisioner "local-exec" {
     command = "aws ec2 terminate-instances --instance-ids ${aws_instance.main.id}"
-    interpreter = ["PowerShell", "-c"]
   }
 
   depends_on = [aws_ami_from_instance.main]
